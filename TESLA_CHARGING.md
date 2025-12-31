@@ -68,7 +68,7 @@ template:
           {% set calculated = (surplus * 1000 / voltage / phases) | int %}
           {{ min(calculated, max_amps) }}
         attributes:
-          phases: 1
+          phases: "1"
           note: "Change phases to 3 for three-phase charging"
         
       - name: "Tesla Charging Status"
