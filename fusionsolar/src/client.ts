@@ -169,10 +169,6 @@ export class FusionSolarClient {
       // Wait a bit before submitting
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Take a screenshot for debugging
-      console.log('Taking screenshot before login...');
-      await page.screenshot({ path: 'before-login.png', fullPage: true });
-
       // Click the login button - try common selectors
       console.log('Clicking login button...');
       
