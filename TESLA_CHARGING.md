@@ -117,13 +117,9 @@ automation:
       - condition: state
         entity_id: input_boolean.tesla_smart_charging
         state: "on"
-      # Tesla must be home and plugged in
-      - condition: state
-        entity_id: binary_sensor.YOUR_TESLA_charger  # Change to your Tesla charger sensor
-        state: "on"
       # Tesla not fully charged
       - condition: numeric_state
-        entity_id: sensor.t_j_fast_batteriestand  # Change to your Tesla battery sensor
+        entity_id: sensor.t_j_fast_batteriestand
         below: 95
     
     action:
