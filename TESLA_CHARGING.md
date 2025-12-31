@@ -70,7 +70,6 @@ template:
         attributes:
           phases: "1"
           note: "Change phases to 3 for three-phase charging"
-        
       - name: "Tesla Charging Status"
         unique_id: tesla_charging_status
         state: >
@@ -124,7 +123,7 @@ automation:
         state: "on"
       # Tesla not fully charged
       - condition: numeric_state
-        entity_id: sensor.YOUR_TESLA_battery  # Change to your Tesla battery sensor
+        entity_id: sensor.t_j_fast_batteriestand  # Change to your Tesla battery sensor
         below: 95
     
     action:
@@ -137,7 +136,7 @@ automation:
             sequence:
               - service: switch.turn_off
                 target:
-                  entity_id: switch.YOUR_TESLA_charger  # Change to your Tesla charger switch
+                  entity_id: switch.t_j_fast_aufladung
               - service: notify.notify
                 data:
                   title: "Tesla Charging"
@@ -158,7 +157,7 @@ automation:
               # Start charging
               - service: switch.turn_on
                 target:
-                  entity_id: switch.YOUR_TESLA_charger
+                  entity_id: switch.t_j_fast_aufladung
               - service: notify.notify
                 data:
                   title: "Tesla Charging"
@@ -168,7 +167,7 @@ automation:
         default:
           - service: switch.turn_off
             target:
-              entity_id: switch.YOUR_TESLA_charger
+              entity_id: switch.t_j_fast_aufladung
           - service: notify.notify
             data:
               title: "Tesla Charging"
@@ -191,13 +190,13 @@ automation:
         entity_id: input_boolean.tesla_smart_charging
         state: "on"
       - condition: state
-        entity_id: switch.YOUR_TESLA_charger
+        entity_id: switch.t_j_fast_aufladung
         state: "on"
     
     action:
       - service: switch.turn_off
         target:
-          entity_id: switch.YOUR_TESLA_charger
+          entity_id: switch.t_j_fast_aufladung
       - service: notify.notify
         data:
           title: "Tesla Charging"
@@ -211,18 +210,16 @@ automation:
 1. Go to **Settings** → **Devices & Services** → **Tesla**
 2. Click on your vehicle
 3. Note down these entity IDs:
-   - Charger switch: `switch.YOUR_TESLA_charger`
-   - Battery level: `sensor.YOUR_TESLA_battery`
+   - Charger switch: `switch.t_j_fast_aufladung`
+   - Battery level: `sensor.t_j_fast_batteriestand`
    - Charging amps: `number.YOUR_TESLA_charging_amps`
-   - Charger sensor: `binary_sensor.YOUR_TESLA_charger`
 
 ### 2. Replace Placeholders
 
 In the automation above, replace:
-- `switch.YOUR_TESLA_charger` → Your actual switch entity
-- `sensor.YOUR_TESLA_battery` → Your actual battery sensor
+- `switch.t_j_fast_aufladung` → Already set! (your charger switch)
+- `sensor.t_j_fast_batteriestand` → Already set! (your battery sensor)
 - `number.YOUR_TESLA_charging_amps` → Your actual charging amps entity
-- `binary_sensor.YOUR_TESLA_charger` → Your actual charger binary sensor
 
 ### 3. Adjust for Three-Phase Charging
 
@@ -264,9 +261,9 @@ cards:
   - type: entities
     title: Tesla Vehicle
     entities:
-      - entity: sensor.YOUR_TESLA_battery
+      - entity: sensor.t_j_fast_batteriestand
         name: Tesla Battery
-      - entity: switch.YOUR_TESLA_charger
+      - entity: switch.t_j_fast_aufladung
         name: Charger
       - entity: number.YOUR_TESLA_charging_amps
         name: Charging Amps
