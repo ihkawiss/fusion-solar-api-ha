@@ -147,7 +147,7 @@ automation:
               # Calculate and set charging amps
               - service: number.set_value
                 target:
-                  entity_id: number.YOUR_TESLA_charging_amps  # Change to your Tesla charging amps entity
+                  entity_id: number.t_j_fast_ladestrom
                 data:
                   value: "{{ states('sensor.tesla_calculated_charging_amps') | int }}"
               # Start charging
@@ -208,14 +208,16 @@ automation:
 3. Note down these entity IDs:
    - Charger switch: `switch.t_j_fast_aufladung`
    - Battery level: `sensor.t_j_fast_batteriestand`
-   - Charging amps: `number.YOUR_TESLA_charging_amps`
+   - Charging amps: `number.t_j_fast_ladestrom`
 
 ### 2. Replace Placeholders
 
-In the automation above, replace:
-- `switch.t_j_fast_aufladung` → Already set! (your charger switch)
-- `sensor.t_j_fast_batteriestand` → Already set! (your battery sensor)
-- `number.YOUR_TESLA_charging_amps` → Your actual charging amps entity
+In the automation above, all entities are already set:
+- ✅ `switch.t_j_fast_aufladung` - Charger switch
+- ✅ `sensor.t_j_fast_batteriestand` - Battery level
+- ✅ `number.t_j_fast_ladestrom` - Charging amps
+
+**No replacements needed!** Just copy and paste the automation. 🎉
 
 ### 3. Adjust for Three-Phase Charging
 
@@ -261,7 +263,7 @@ cards:
         name: Tesla Battery
       - entity: switch.t_j_fast_aufladung
         name: Charger
-      - entity: number.YOUR_TESLA_charging_amps
+      - entity: number.t_j_fast_ladestrom
         name: Charging Amps
 ```
 
