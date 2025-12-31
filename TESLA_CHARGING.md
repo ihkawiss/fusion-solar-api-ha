@@ -63,10 +63,13 @@ template:
         state: >
           {% set surplus = states('sensor.exceeding_power') | float(0) %}
           {% set voltage = 230 %}
-          {% set phases = 1 %}  # Change to 3 for three-phase charging
+          {% set phases = 1 %}
           {% set max_amps = states('input_number.tesla_max_amps') | int(16) %}
           {% set calculated = (surplus * 1000 / voltage / phases) | int %}
           {{ min(calculated, max_amps) }}
+        attributes:
+          phases: 1
+          note: "Change phases to 3 for three-phase charging"
         
       - name: "Tesla Charging Status"
         unique_id: tesla_charging_status
@@ -223,9 +226,10 @@ In the automation above, replace:
 
 ### 3. Adjust for Three-Phase Charging
 
-If you have three-phase charging, change this line in the template sensor:
+If you have three-phase charging, change `phases = 1` to `phases = 3` in the template:
+
 ```yaml
-{% set phases = 3 %}  # For three-phase
+{% set phases = 3 %}
 ```
 
 ## Dashboard Card
