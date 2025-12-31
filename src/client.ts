@@ -196,10 +196,6 @@ export class FusionSolarClient {
       const currentUrl = page.url();
       console.log('Current URL after login:', currentUrl);
 
-      // Take a screenshot after login for debugging
-      console.log('Taking screenshot after login...');
-      await page.screenshot({ path: 'after-login.png', fullPage: true });
-
       // Get cookies from the browser
       const browserCookies = await page.cookies();
       console.log(`Retrieved ${browserCookies.length} cookies from browser`);
