@@ -73,9 +73,10 @@ Developer Tools → States → Search "sensor.solar_"
 - `sensor.battery_power` - Battery charge/discharge (kW)
 - `sensor.battery_state_of_charge` - Battery level (%)
 - `sensor.battery_mode` - Operating mode
-- `sensor.exceeding_power` - Surplus/deficit power (kW) - **NEW!**
-  - Positive = Surplus (producing more than consuming)
-  - Negative = Deficit (consuming more than producing)
+- `sensor.exceeding_power` - Surplus power available (kW) - **NEW!**
+  - Shows excess solar production (always 0 or positive)
+  - 0 kW = No surplus (consuming all or more than producing)
+  - >0 kW = Surplus available for charging, heating, etc.
 
 ---
 

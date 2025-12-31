@@ -65,7 +65,7 @@ function extractKeyMetrics(data: any) {
   if (metrics.electricalLoad && metrics.inputPower) {
     const solarProduction = parseFloat(metrics.inputPower.value.split(' ')[0]) || 0;
     const consumption = metrics.electricalLoad.numericValue || 0;
-    const exceedingPower = solarProduction - consumption;
+    const exceedingPower = Math.max(0, solarProduction - consumption); // Never negative
     
     metrics.exceedingPower = {
       label: 'Exceeding Power',
@@ -173,8 +173,8 @@ async function main() {
         
         if (metrics.exceedingPower) {
           const value = metrics.exceedingPower.numericValue;
-          const icon = value > 0 ? '📈' : '📉';
-          const status = value > 0 ? 'Surplus' : 'Deficit';
+          const icon = value > 0 ? '📈' : '⚖️';
+          const status = value > 0 ? 'Surplus' : 'Balanced';
           console.log(`${icon} ${metrics.exceedingPower.label}: ${metrics.exceedingPower.value} (${status})`);
         }
         
