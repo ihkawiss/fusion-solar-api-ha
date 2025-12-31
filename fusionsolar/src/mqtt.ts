@@ -168,6 +168,23 @@ export class MQTTPublisher {
       { retain: true }
     );
 
+    // Exceeding Power sensor (surplus/deficit)
+    const exceedingPowerConfig = {
+      name: 'Exceeding Power',
+      unique_id: 'fusionsolar_exceeding_power',
+      state_topic: 'homeassistant/sensor/fusionsolar/exceeding_power/state',
+      unit_of_measurement: 'kW',
+      device_class: 'power',
+      state_class: 'measurement',
+      icon: 'mdi:solar-power-variant',
+      device: deviceInfo
+    };
+    this.client.publish(
+      'homeassistant/sensor/fusionsolar/exceeding_power/config',
+      JSON.stringify(exceedingPowerConfig),
+      { retain: true }
+    );
+
     console.log('✓ Published MQTT discovery messages');
   }
 
