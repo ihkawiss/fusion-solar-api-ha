@@ -228,6 +228,14 @@ export class MQTTPublisher {
         metrics.battery.chargeMode
       );
     }
+
+    // Publish exceeding power (surplus/deficit)
+    if (metrics.exceedingPower) {
+      this.client.publish(
+        'homeassistant/sensor/fusionsolar/exceeding_power/state',
+        metrics.exceedingPower.numericValue.toString()
+      );
+    }
   }
 
   disconnect(): void {

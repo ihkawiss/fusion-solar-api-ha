@@ -154,6 +154,9 @@ Once configured and running, the following sensors will be automatically discove
 - `sensor.battery_power` - Battery charge/discharge power (kW)
 - `sensor.battery_state_of_charge` - Battery SOC (%)
 - `sensor.battery_mode` - Current battery operating mode
+- `sensor.exceeding_power` - Surplus/deficit power (kW)
+  - **Positive value**: You're producing more than consuming (surplus available)
+  - **Negative value**: You're consuming more than producing (deficit)
 
 ## Finding Your Station DN
 

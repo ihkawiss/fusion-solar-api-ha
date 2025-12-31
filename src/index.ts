@@ -61,6 +61,19 @@ function extractKeyMetrics(data: any) {
     };
   }
 
+  // Calculate exceeding power (surplus)
+  if (metrics.electricalLoad && metrics.inputPower) {
+    const solarProduction = parseFloat(metrics.inputPower.value.split(' ')[0]) || 0;
+    const consumption = metrics.electricalLoad.numericValue || 0;
+    const exceedingPower = solarProduction - consumption;
+    
+    metrics.exceedingPower = {
+      label: 'Exceeding Power',
+      value: `${exceedingPower.toFixed(3)} kW`,
+      numericValue: exceedingPower
+    };
+  }
+
   return metrics;
 }
 
@@ -156,6 +169,13 @@ async function main() {
         if (metrics.battery) {
           console.log(`🔋 ${metrics.battery.label}: ${metrics.battery.power} (SOC: ${metrics.battery.soc})`);
           console.log(`   Mode: ${metrics.battery.chargeMode}`);
+        }
+        
+        if (metrics.exceedingPower) {
+          const value = metrics.exceedingPower.numericValue;
+          const icon = value > 0 ? '📈' : '📉';
+          const status = value > 0 ? 'Surplus' : 'Deficit';
+          console.log(`${icon} ${metrics.exceedingPower.label}: ${metrics.exceedingPower.value} (${status})`);
         }
         
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
