@@ -121,7 +121,7 @@ mqtt_port: 1883
 mqtt_username: "mqtt_user"
 mqtt_password: "your_mqtt_user_password"
 poll_interval_minutes: 1
-station_dn: "NE=169590965"
+station_dn: "NE=123456789"
 ```
 
 **To find your Station DN:**
@@ -161,9 +161,9 @@ Your Station DN is a unique identifier for your solar installation. You can find
 
 1. Log into the FusionSolar web portal
 2. Navigate to your plant/station
-3. Look at the URL in your browser - it will contain something like `stationDn=NE%3D169590965`
+3. Look at the URL in your browser - it will contain something like `stationDn=NE%3D123456789`
 4. The part after `NE%3D` (or `NE=`) is your station DN
-5. In this example, use `NE=169590965` in the configuration
+5. In this example, use `NE=123456789` in the configuration
 
 ## Configuration Example
 
@@ -175,7 +175,7 @@ mqtt_port: 1883
 mqtt_username: "mqtt_user"
 mqtt_password: "mqtt_password"
 poll_interval_minutes: 1
-station_dn: "NE=169590965"
+station_dn: "NE=123456789"
 ```
 
 **Note:** MQTT authentication is required. You must create a Home Assistant user for MQTT access.
