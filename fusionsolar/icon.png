@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="sunGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="45" fill="url(#sunGradient)"/>
+  <circle cx="50" cy="50" r="20" fill="#FF8C00"/>
+  <line x1="50" y1="5" x2="50" y2="20" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <line x1="50" y1="80" x2="50" y2="95" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <line x1="5" y1="50" x2="20" y2="50" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <line x1="80" y1="50" x2="95" y2="50" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <line x1="15" y1="15" x2="25" y2="25" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <line x1="75" y1="75" x2="85" y2="85" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <line x1="85" y1="15" x2="75" y2="25" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <line x1="25" y1="75" x2="15" y2="85" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+</svg>
