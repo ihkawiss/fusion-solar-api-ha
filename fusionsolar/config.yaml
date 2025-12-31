@@ -1,5 +1,5 @@
 name: "FusionSolar MQTT Bridge"
-version: "1.0.0"
+version: "1.0.1"
 slug: "fusionsolar"
 description: "Fetch Huawei FusionSolar data and publish to MQTT for Home Assistant"
 url: "https://github.com/ihkawiss/fusion-solar-api-ha"
