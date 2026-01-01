@@ -81,6 +81,41 @@ export class FusionSolarClient {
   }
 
   /**
+   * Keep session alive by calling the keep-alive endpoint
+   */
+  private async keepSessionAlive(): Promise<boolean> {
+    if (this.cookies.length === 0) {
+      console.log('No cookies available for keep-alive');
+      return false;
+    }
+
+    try {
+      const response = await this.client.get(
+        `${this.apiUrl}/rest/dpcloud/auth/v1/keep-alive`,
+        {
+          headers: {
+            'Cookie': this.getCookieHeader(),
+            'Referer': this.baseUrl
+          },
+          validateStatus: () => true,
+          maxRedirects: 0
+        }
+      );
+      
+      if (response.status === 200 && !response.data?.error) {
+        console.log('Session keep-alive successful ✓');
+        return true;
+      }
+      
+      console.log('Session keep-alive failed');
+      return false;
+    } catch (error) {
+      console.log('Keep-alive request failed:', error instanceof Error ? error.message : error);
+      return false;
+    }
+  }
+
+  /**
    * Check if session is valid by making a test request
    */
   private async validateSession(): Promise<boolean> {
@@ -253,6 +288,9 @@ export class FusionSolarClient {
    */
   async getEnergyFlow(): Promise<any> {
     await this.ensureSession();
+    
+    // Keep session alive before fetching data
+    await this.keepSessionAlive();
     
     try {
       const response = await this.client.get(
