@@ -36,6 +36,8 @@ Go to **Settings** → **Devices & Services** → **Helpers** → **Create Helpe
 - Step: 0.5
 - Unit: kW
 - Default: 1.5
+- Mode: box (allows manual entry with keyboard)
+- Note: 2A minimum charging = ~0.46 kW, so you can go as low as 0.5 kW
 
 #### Input Number: Maximum Charging Amps
 - Name: `Tesla Charging - Max Amps`
@@ -45,6 +47,16 @@ Go to **Settings** → **Devices & Services** → **Helpers** → **Create Helpe
 - Step: 1
 - Unit: A
 - Default: 16
+
+#### Input Number: Battery Max Charge Rate
+- Name: `Tesla Charging - Battery Max Charge Rate`
+- Entity ID: `input_number.battery_max_charge_rate`
+- Min: 0
+- Max: 10
+- Step: 0.5
+- Unit: kW
+- Default: 3.5
+- Mode: box (allows manual entry with keyboard)
 
 #### Input Boolean: Enable Smart Charging
 - Name: `Tesla Smart Charging Enabled`
@@ -61,28 +73,62 @@ template:
         unique_id: tesla_calculated_charging_amps
         unit_of_measurement: "A"
         state: >
-          {% set surplus = states('sensor.exceeding_power') | float(0) %}
+          {% set surplus = states('sensor.fusionsolar_system_exceeding_power') | float(0) %}
+          {% set battery_soc = states('sensor.fusionsolar_system_battery_state_of_charge') | float(0) %}
+          {% set battery_power = states('sensor.fusionsolar_system_battery_power') | float(0) %}
+          {% set threshold = states('input_number.tesla_battery_priority_threshold') | float(50) %}
+          {% set battery_max = states('input_number.battery_max_charge_rate') | float(3.5) %}
           {% set voltage = 230 %}
           {% set phases = 1 %}
           {% set max_amps = states('input_number.tesla_max_amps') | int(16) %}
-          {% set calculated = (surplus * 1000 / voltage / phases) | int %}
-          {{ min(calculated, max_amps) }}
+          
+          {% if battery_soc < threshold and battery_power > 0 %}
+            {# Battery is below threshold and charging - subtract what battery is using #}
+            {% set available = surplus - battery_power %}
+          {% else %}
+            {# Battery OK or not charging - use full surplus #}
+            {% set available = surplus %}
+          {% endif %}
+          
+          {% set calculated = (available * 1000 / voltage / phases) | int %}
+          {% set min_amps = 2 %}
+          {% if calculated < min_amps %}
+            0
+          {% else %}
+            {{ min(calculated, max_amps) }}
+          {% endif %}
         attributes:
           phases: "1"
-          note: "Change phases to 3 for three-phase charging"
+          available_surplus: >
+            {% set surplus = states('sensor.fusionsolar_system_exceeding_power') | float(0) %}
+            {% set battery_soc = states('sensor.fusionsolar_system_battery_state_of_charge') | float(0) %}
+            {% set battery_power = states('sensor.fusionsolar_system_battery_power') | float(0) %}
+            {% set threshold = states('input_number.tesla_battery_priority_threshold') | float(50) %}
+            {% if battery_soc < threshold and battery_power > 0 %}
+              {{ (surplus - battery_power) | round(2) }}
+            {% else %}
+              {{ surplus }}
+            {% endif %}
+          note: "Accounts for battery priority - shows remaining surplus after battery charging"
       - name: "Tesla Charging Status"
         unique_id: tesla_charging_status
         state: >
-          {% set battery_soc = states('sensor.battery_state_of_charge') | float(0) %}
+          {% set battery_soc = states('sensor.fusionsolar_system_battery_state_of_charge') | float(0) %}
           {% set threshold = states('input_number.tesla_battery_priority_threshold') | float(50) %}
-          {% set surplus = states('sensor.exceeding_power') | float(0) %}
+          {% set surplus = states('sensor.fusionsolar_system_exceeding_power') | float(0) %}
+          {% set battery_power = states('sensor.fusionsolar_system_battery_power') | float(0) %}
           {% set min_surplus = states('input_number.tesla_min_surplus') | float(1.5) %}
           {% set smart_enabled = is_state('input_boolean.tesla_smart_charging', 'on') %}
           
           {% if not smart_enabled %}
             disabled
-          {% elif battery_soc < threshold %}
-            battery_priority
+          {% elif battery_soc < threshold and battery_power > 0 %}
+            {% set available = surplus - battery_power %}
+            {% if available >= min_surplus %}
+              charging_available_limited
+            {% else %}
+              battery_priority
+            {% endif %}
           {% elif surplus < min_surplus %}
             no_surplus
           {% else %}
@@ -104,10 +150,10 @@ automation:
     trigger:
       # Check every minute when exceeding power changes
       - platform: state
-        entity_id: sensor.exceeding_power
+        entity_id: sensor.fusionsolar_system_exceeding_power
       # Also check when battery SOC changes
       - platform: state
-        entity_id: sensor.battery_state_of_charge
+        entity_id: sensor.fusionsolar_system_battery_state_of_charge
       # Check periodically
       - platform: time_pattern
         minutes: "/5"
@@ -124,24 +170,58 @@ automation:
     
     action:
       - choose:
-          # Case 1: Home battery below threshold - stop Tesla charging
+          # Case 1: Home battery below threshold - check if there's surplus after battery
           - conditions:
               - condition: numeric_state
-                entity_id: sensor.battery_state_of_charge
+                entity_id: sensor.fusionsolar_system_battery_state_of_charge
                 below: input_number.tesla_battery_priority_threshold
             sequence:
-              - service: switch.turn_off
-                target:
-                  entity_id: switch.t_j_fast_aufladung
-              - service: notify.notify
-                data:
-                  title: "Tesla Charging"
-                  message: "Paused - Home battery priority ({{ states('sensor.battery_state_of_charge') }}%)"
+              - choose:
+                  # Case 1a: Battery charging, but still surplus left - use remainder
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {% set surplus = states('sensor.fusionsolar_system_exceeding_power') | float(0) %}
+                          {% set battery_power = states('sensor.fusionsolar_system_battery_power') | float(0) %}
+                          {% set min_surplus = states('input_number.tesla_min_surplus') | float(1.5) %}
+                          {% set available = surplus - battery_power %}
+                          {{ battery_power > 0 and available >= min_surplus }}
+                    sequence:
+                      # Calculate and set charging amps based on remaining surplus
+                      - service: number.set_value
+                        target:
+                          entity_id: number.t_j_fast_ladestrom
+                        data:
+                          value: "{{ states('sensor.tesla_calculated_charging_amps') | int }}"
+                      # Start charging
+                      - service: switch.turn_on
+                        target:
+                          entity_id: switch.t_j_fast_aufladung
+                      - service: notify.notify
+                        data:
+                          title: "Tesla Charging"
+                          message: >
+                            Charging at {{ states('sensor.tesla_calculated_charging_amps') }}A 
+                            (Battery priority: using {{ (states('sensor.fusionsolar_system_exceeding_power')|float(0) - states('sensor.fusionsolar_system_battery_power')|float(0))|round(1) }} kW surplus)
+                # Case 1b: Battery needs all the power - stop Tesla
+                default:
+                  - if:
+                      - condition: state
+                        entity_id: switch.t_j_fast_aufladung
+                        state: "on"
+                    then:
+                      - service: switch.turn_off
+                        target:
+                          entity_id: switch.t_j_fast_aufladung
+                      - service: notify.notify
+                        data:
+                          title: "Tesla Charging"
+                          message: "Paused - Home battery priority ({{ states('sensor.fusionsolar_system_battery_state_of_charge') }}% - battery using {{ states('sensor.fusionsolar_system_battery_power') }} kW)"
           
           # Case 2: Enough surplus available - charge!
           - conditions:
               - condition: numeric_state
-                entity_id: sensor.exceeding_power
+                entity_id: sensor.fusionsolar_system_exceeding_power
                 above: input_number.tesla_min_surplus
             sequence:
               # Calculate and set charging amps
@@ -157,17 +237,22 @@ automation:
               - service: notify.notify
                 data:
                   title: "Tesla Charging"
-                  message: "Charging at {{ states('sensor.tesla_calculated_charging_amps') }}A ({{ states('sensor.exceeding_power') }} kW surplus)"
+                  message: "Charging at {{ states('sensor.tesla_calculated_charging_amps') }}A ({{ states('sensor.fusionsolar_system_exceeding_power') }} kW surplus)"
         
         # Default: Not enough surplus - stop charging
         default:
-          - service: switch.turn_off
-            target:
-              entity_id: switch.t_j_fast_aufladung
-          - service: notify.notify
-            data:
-              title: "Tesla Charging"
-              message: "Paused - Insufficient surplus ({{ states('sensor.exceeding_power') }} kW)"
+          - if:
+              - condition: state
+                entity_id: switch.t_j_fast_aufladung
+                state: "on"
+            then:
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.t_j_fast_aufladung
+              - service: notify.notify
+                data:
+                  title: "Tesla Charging"
+                  message: "Paused - Insufficient surplus ({{ states('sensor.fusionsolar_system_exceeding_power') }} kW)"
 
   # Automation 2: Stop Tesla Charging when surplus drops
   - id: tesla_smart_charging_stop
@@ -176,7 +261,7 @@ automation:
     mode: single
     trigger:
       - platform: numeric_state
-        entity_id: sensor.exceeding_power
+        entity_id: sensor.fusionsolar_system_exceeding_power
         below: 1.0  # Stop if surplus drops below 1 kW
         for:
           minutes: 2  # Wait 2 minutes to avoid fluctuations
@@ -196,7 +281,7 @@ automation:
       - service: notify.notify
         data:
           title: "Tesla Charging"
-          message: "Stopped - Surplus too low ({{ states('sensor.exceeding_power') }} kW)"
+          message: "Stopped - Surplus too low ({{ states('sensor.fusionsolar_system_exceeding_power') }} kW)"
 ```
 
 ## Configuration Steps
@@ -242,9 +327,9 @@ cards:
       - entity: sensor.tesla_charging_status
         name: Status
       - type: divider
-      - entity: sensor.exceeding_power
+      - entity: sensor.fusionsolar_system_exceeding_power
         name: Available Surplus
-      - entity: sensor.battery_state_of_charge
+      - entity: sensor.fusionsolar_system_battery_state_of_charge
         name: Home Battery SOC
       - entity: sensor.tesla_calculated_charging_amps
         name: Charging Amps
@@ -255,6 +340,8 @@ cards:
         name: Minimum Surplus
       - entity: input_number.tesla_max_amps
         name: Maximum Amps
+      - entity: input_number.battery_max_charge_rate
+        name: Battery Max Charge Rate
 
   - type: entities
     title: Tesla Vehicle
