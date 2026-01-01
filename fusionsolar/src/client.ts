@@ -27,6 +27,8 @@ export class FusionSolarClient {
   public stationDn = 'NE=XXXXXXXXXXXX';
   private cookies: CookieData[] = [];
   private headless: boolean;
+  private lastKeepAlive: number = 0;
+  private keepAliveInterval: number = 10 * 60 * 1000; // 10 minutes in milliseconds
 
   constructor(credentials: LoginCredentials, cookieFile = 'cookies.json', headless = true) {
     this.credentials = credentials;
@@ -289,8 +291,12 @@ export class FusionSolarClient {
   async getEnergyFlow(): Promise<any> {
     await this.ensureSession();
     
-    // Keep session alive before fetching data
-    await this.keepSessionAlive();
+    // Keep session alive every 10 minutes
+    const now = Date.now();
+    if (now - this.lastKeepAlive >= this.keepAliveInterval) {
+      await this.keepSessionAlive();
+      this.lastKeepAlive = now;
+    }
     
     try {
       const response = await this.client.get(
