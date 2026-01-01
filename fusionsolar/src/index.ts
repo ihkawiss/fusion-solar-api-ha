@@ -38,14 +38,15 @@ function extractKeyMetrics(data: any) {
     };
   }
 
-  // Extract buy power (grid import)
+  // Extract buy power (grid import/export)
   const buyPowerLink = flow.links.find((link: any) =>
     link.description?.label === 'neteco.pvms.energy.flow.buy.power'
   );
   if (buyPowerLink) {
     const buyPowerValue = parseFloat(buyPowerLink.description.value.split(' ')[0]) || 0;
+    const isExport = buyPowerLink.flowing === 'FORWARD';
     metrics.buyPower = {
-      label: 'Grid Import',
+      label: isExport ? 'Grid Export' : 'Grid Import',
       value: buyPowerLink.description.value,
       numericValue: buyPowerValue
     };
@@ -173,7 +174,8 @@ async function main() {
         }
         
         if (metrics.buyPower) {
-          console.log(`⚡ ${metrics.buyPower.label}: ${metrics.buyPower.value}`);
+          const icon = metrics.buyPower.label === 'Grid Export' ? '📤' : '📥';
+          console.log(`${icon} ${metrics.buyPower.label}: ${metrics.buyPower.value}`);
         }
         
         if (metrics.battery) {
