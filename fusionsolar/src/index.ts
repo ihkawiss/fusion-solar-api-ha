@@ -48,7 +48,8 @@ function extractKeyMetrics(data: any) {
     metrics.buyPower = {
       label: isExport ? 'Grid Export' : 'Grid Import',
       value: buyPowerLink.description.value,
-      numericValue: buyPowerValue
+      numericValue: isExport ? 0 : buyPowerValue, // 0 when exporting (not importing)
+      isExport: isExport
     };
   }
 
