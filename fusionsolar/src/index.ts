@@ -69,18 +69,14 @@ function extractKeyMetrics(data: any) {
   }
 
   // Calculate exceeding power (surplus)
-  // Surplus = Solar Production - Battery Charging (if charging, min 0) - Electrical Load - Grid Import
+  // Surplus = Solar Production - Electrical Load - Grid Import
+  // Note: Battery charging IS surplus (solar energy being stored), so we don't subtract it
   if (metrics.electricalLoad && metrics.inputPower) {
     const solarProduction = metrics.inputPower.numericValue || 0;
     const consumption = metrics.electricalLoad.numericValue || 0;
     const gridImport = metrics.buyPower?.numericValue || 0;
     
-    // Only subtract battery power if it's charging (positive value)
-    const batteryCharging = (metrics.battery?.isCharging && metrics.battery?.numericValue > 0) 
-      ? metrics.battery.numericValue 
-      : 0;
-    
-    const exceedingPower = Math.max(0, solarProduction - batteryCharging - consumption - gridImport);
+    const exceedingPower = Math.max(0, solarProduction - consumption - gridImport);
     
     metrics.exceedingPower = {
       label: 'Exceeding Power',
