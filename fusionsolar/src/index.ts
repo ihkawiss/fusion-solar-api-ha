@@ -26,14 +26,15 @@ function extractKeyMetrics(data: any) {
     };
   }
 
-  // Extract input power (solar production)
-  const inputPowerLink = flow.links.find((link: any) =>
-    link.description?.label === 'neteco.pvms.energy.flow.input.power'
+  // Extract input power (solar production) from the string node
+  const solarNode = flow.nodes.find((node: any) => 
+    node.name === 'neteco.pvms.devTypeLangKey.string' && node.mocId === 20812
   );
-  if (inputPowerLink) {
+  if (solarNode) {
     metrics.inputPower = {
       label: 'Solar Production',
-      value: inputPowerLink.description.value
+      value: solarNode.description.value,
+      numericValue: solarNode.value
     };
   }
 
@@ -42,9 +43,11 @@ function extractKeyMetrics(data: any) {
     link.description?.label === 'neteco.pvms.energy.flow.buy.power'
   );
   if (buyPowerLink) {
+    const buyPowerValue = parseFloat(buyPowerLink.description.value.split(' ')[0]) || 0;
     metrics.buyPower = {
       label: 'Grid Import',
-      value: buyPowerLink.description.value
+      value: buyPowerLink.description.value,
+      numericValue: buyPowerValue
     };
   }
 
@@ -53,19 +56,31 @@ function extractKeyMetrics(data: any) {
     node.name === 'neteco.pvms.devTypeLangKey.energy_store'
   );
   if (batteryNode && batteryNode.deviceTips) {
+    // Positive value = charging, negative = discharging
+    const batteryPower = batteryNode.value || 0;
     metrics.battery = {
       label: 'Battery',
       soc: batteryNode.deviceTips.SOC + '%',
       power: batteryNode.description.value,
+      numericValue: batteryPower,
+      isCharging: batteryPower > 0,
       chargeMode: batteryNode.deviceTips.CHARGE_MODE_VALUE
     };
   }
 
   // Calculate exceeding power (surplus)
+  // Surplus = Solar Production - Battery Charging (if charging, min 0) - Electrical Load - Grid Import
   if (metrics.electricalLoad && metrics.inputPower) {
-    const solarProduction = parseFloat(metrics.inputPower.value.split(' ')[0]) || 0;
+    const solarProduction = metrics.inputPower.numericValue || 0;
     const consumption = metrics.electricalLoad.numericValue || 0;
-    const exceedingPower = Math.max(0, solarProduction - consumption); // Never negative
+    const gridImport = metrics.buyPower?.numericValue || 0;
+    
+    // Only subtract battery power if it's charging (positive value)
+    const batteryCharging = (metrics.battery?.isCharging && metrics.battery?.numericValue > 0) 
+      ? metrics.battery.numericValue 
+      : 0;
+    
+    const exceedingPower = Math.max(0, solarProduction - batteryCharging - consumption - gridImport);
     
     metrics.exceedingPower = {
       label: 'Exceeding Power',

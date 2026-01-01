@@ -80,119 +80,14 @@ Developer Tools → States → Search "sensor.solar_"
 
 ---
 
-## Standalone Usage
+## Development
 
-For running outside of Home Assistant (manual installation):
+To test locally or contribute:
 
-## Features
-
-- **Puppeteer-based login** - Handles complex login flows automatically
-- **MQTT Integration** - Publishes data to Home Assistant via MQTT
-- Automatic session management with cookie persistence
-- Automatic re-authentication when session expires
-- Configurable polling interval
-- Fetches energy flow data from your solar station
-- Headless or visible browser mode for debugging
-
-## Setup
-
-1. Install dependencies:
 ```bash
+cd fusionsolar
 npm install
-```
-
-2. Create a `.env` file (copy from `.env.example`):
-```bash
-cp .env.example .env
-```
-
-3. Edit `.env` and add your FusionSolar credentials:
-```
-FUSIONSOLAR_USERNAME=your_email_or_username
-FUSIONSOLAR_PASSWORD=your_password
-POLL_INTERVAL_MINUTES=1
-STATION_DN=NE=XXXXXXXXXXXX
-
-# Optional: MQTT for Home Assistant
-MQTT_HOST=localhost
-MQTT_PORT=1883
-MQTT_USERNAME=homeassistant
-MQTT_PASSWORD=mqtt_password
-
-# Optional: Set to false to see the browser during login (for debugging)
-# HEADLESS=false
-```
-
-## Usage
-
-### Development mode (with ts-node):
-```bash
 npm run dev
 ```
 
-### Production mode:
-```bash
-npm run build
-npm start
-```
-
-## How it works
-
-1. The script uses **Puppeteer** to automate the browser and handle the login process
-2. After successful login, cookies are saved to `cookies.json`
-3. On subsequent runs, it reuses the saved cookies to avoid logging in again
-4. If the session expires, it automatically logs in again using Puppeteer
-5. Once authenticated, it fetches energy flow data from the configured station using axios
-6. Data is fetched at regular intervals (default: every 1 minute)
-
-## Configuration
-
-- `FUSIONSOLAR_USERNAME`: Your FusionSolar login username/email
-- `FUSIONSOLAR_PASSWORD`: Your FusionSolar password
-- `POLL_INTERVAL_MINUTES`: How often to fetch data (in minutes, default: 1)
-- `STATION_DN`: Your station device identifier (e.g., `NE=XXXXXXXXXXXX`)
-- `HEADLESS`: Set to `false` to see the browser during login (useful for debugging, default: `true`)
-- `MQTT_HOST`: MQTT broker address (optional, for Home Assistant integration)
-- `MQTT_PORT`: MQTT broker port (default: 1883)
-- `MQTT_USERNAME`: MQTT username (optional)
-- `MQTT_PASSWORD`: MQTT password (optional)
-
-## Output
-
-The script outputs solar system metrics in a clean format:
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 SOLAR SYSTEM METRICS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏠 Electrical Load (Household): 0.471 kW
-☀️  Solar Production: 0.000 kW
-⚡ Grid Import: 0.471 kW
-🔋 Battery: 0.000 kW (SOC: 5.0%)
-   Mode: Maximum self-consumption
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-### MQTT Integration
-
-When MQTT is configured, the following sensors are published to Home Assistant:
-- `sensor.solar_electrical_load` - Household consumption
-- `sensor.solar_production` - Solar generation
-- `sensor.grid_import` - Grid power import
-- `sensor.battery_power` - Battery charge/discharge
-- `sensor.battery_state_of_charge` - Battery SOC (%)
-- `sensor.battery_mode` - Battery operating mode
-
-You can also modify `src/index.ts` to:
-- Save data to a file or database
-- Send notifications
-- Process the data in custom ways
-
-## Notes
-
-- Uses Puppeteer to handle complex login flows (CSRF tokens, JavaScript, etc.)
-- Cookies are saved in `cookies.json` for session persistence
-- The script automatically handles session expiration and re-login
-- Set `HEADLESS=false` in `.env` to see the browser in action (helpful for debugging)
-- On first run, Puppeteer will download Chromium automatically
-- Press Ctrl+C to stop the script gracefully
+See [fusionsolar/DOCS.md](./fusionsolar/DOCS.md) for detailed development documentation.

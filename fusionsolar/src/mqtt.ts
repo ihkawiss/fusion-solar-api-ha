@@ -205,31 +205,28 @@ export class MQTTPublisher {
       );
     }
 
-    // Publish solar production (extract numeric value from string like "0.000 kW")
+    // Publish solar production (use numeric value directly)
     if (metrics.inputPower) {
-      const value = parseFloat(metrics.inputPower.value.split(' ')[0]) || 0;
       this.client.publish(
         'homeassistant/sensor/fusionsolar/solar_production/state',
-        value.toString()
+        metrics.inputPower.numericValue.toString()
       );
     }
 
-    // Publish grid import
+    // Publish grid import (use numeric value directly)
     if (metrics.buyPower) {
-      const value = parseFloat(metrics.buyPower.value.split(' ')[0]) || 0;
       this.client.publish(
         'homeassistant/sensor/fusionsolar/grid_import/state',
-        value.toString()
+        metrics.buyPower.numericValue.toString()
       );
     }
 
     // Publish battery metrics
     if (metrics.battery) {
-      // Battery power
-      const batteryPower = parseFloat(metrics.battery.power.split(' ')[0]) || 0;
+      // Battery power (use numeric value directly)
       this.client.publish(
         'homeassistant/sensor/fusionsolar/battery_power/state',
-        batteryPower.toString()
+        metrics.battery.numericValue.toString()
       );
 
       // Battery SOC
