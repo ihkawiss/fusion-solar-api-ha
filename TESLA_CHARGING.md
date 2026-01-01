@@ -78,8 +78,6 @@ template:
           {% set battery_power = states('sensor.fusionsolar_system_battery_power') | float(0) %}
           {% set threshold = states('input_number.tesla_battery_priority_threshold') | float(50) %}
           {% set battery_max = states('input_number.battery_max_charge_rate') | float(3.5) %}
-          {% set voltage = 230 %}
-          {% set phases = 1 %}
           {% set max_amps = states('input_number.tesla_max_amps') | int(16) %}
           
           {% if battery_soc < threshold and battery_power > 0 %}
@@ -90,7 +88,9 @@ template:
             {% set available = surplus %}
           {% endif %}
           
-          {% set calculated = (available * 1000 / voltage / phases) | int %}
+          {# Three-phase 400V calculation: Power(kW) = √3 × 400V × Amps / 1000 #}
+          {# Therefore: Amps = Power(kW) × 1000 / (√3 × 400) = Power / 0.6928 #}
+          {% set calculated = (available / 0.6928) | int %}
           {% set min_amps = 2 %}
           {% if calculated < min_amps %}
             0
@@ -98,7 +98,7 @@ template:
             {{ min(calculated, max_amps) }}
           {% endif %}
         attributes:
-          phases: "1"
+          phases: "3"
           available_surplus: >
             {% set surplus = states('sensor.fusionsolar_system_exceeding_power') | float(0) %}
             {% set battery_soc = states('sensor.fusionsolar_system_battery_state_of_charge') | float(0) %}
@@ -304,13 +304,13 @@ In the automation above, all entities are already set:
 
 **No replacements needed!** Just copy and paste the automation. 🎉
 
-### 3. Adjust for Three-Phase Charging
+### 3. Configuration Notes
 
-If you have three-phase charging, change `phases = 1` to `phases = 3` in the template:
+The template is already configured for **Swiss three-phase 400V** systems (16A = 11 kW).
 
-```yaml
-{% set phases = 3 %}
-```
+If you have a different setup:
+- **Single-phase 230V**: Change calculation to `{% set calculated = (available * 1000 / 230) | int %}`
+- **Three-phase 230V**: Change calculation to `{% set calculated = (available / 0.4) | int %}`
 
 ## Dashboard Card
 
@@ -367,8 +367,8 @@ cards:
    - If surplus ≥ 1.5 kW → Charge Tesla
 
 3. **Dynamic Amperage**:
-   - Calculates: `Amps = (Surplus kW × 1000) / 230V / Phases`
-   - Example: 3.5 kW surplus = 15A on single-phase
+   - Calculates: `Amps = Power(kW) / 0.6928` for three-phase 400V
+   - Example: 3.5 kW surplus = 5A, 7 kW surplus = 10A, 11 kW surplus = 16A
    - Respects maximum amps setting (default 16A)
 
 4. **Hysteresis**:
@@ -388,7 +388,7 @@ cards:
 - Solar: 8 kW, Consumption: 2 kW
 - Exceeding: 6 kW
 - Battery SOC: 80%
-- **Result**: Tesla charges at 16A (max, limited by setting)
+- **Result**: Tesla charges at 9A (6 kW / 0.6928 ≈ 9A)
 
 ### Scenario 3: Midday (Good Surplus, Battery Low)
 - Solar: 8 kW, Consumption: 2 kW
@@ -400,7 +400,7 @@ cards:
 - Solar: 5 kW, Consumption: 2 kW
 - Exceeding: 3 kW
 - Battery SOC: 90%
-- **Result**: Tesla charges at 13A
+- **Result**: Tesla charges at 4A (3 kW / 0.6928 ≈ 4A)
 
 ## Troubleshooting
 
